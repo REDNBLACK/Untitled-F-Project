@@ -3,28 +3,48 @@ import { HmrState } from 'angular2-hmr';
 
 @Injectable()
 export class AppState {
-    @HmrState() _state = {};
+    @HmrState() _state: any = {};
 
     constructor() {}
 
-    get state () {
-        return this._state = this._clone(this._state);
+    /**
+     * @returns {any}
+     */
+    get state (): any {
+        return this._state = AppState.clone(this._state);
     }
 
-    set state (value) {
+    /**
+     * @param value
+     */
+    set state (value: any) {
         throw new Error('do not mutate the `.state` directly');
     }
 
-    get (prop?: any) {
+    /**
+     * @param prop
+     * @returns {any}
+     */
+    get (prop?: any): any {
         const state = this.state;
+
         return state.hasOwnProperty(prop) ? state[prop] : state;
     }
 
-    set (prop: string, value: any) {
+    /**
+     * @param prop
+     * @param value
+     * @returns {any}
+     */
+    set (prop: string, value: any): any {
         return this._state[prop] = value;
     }
 
-    _clone (object) {
+    /**
+     * @param object
+     * @returns {any}
+     */
+    private static clone (object: any): any {
         return JSON.parse(JSON.stringify(object));
     }
 }

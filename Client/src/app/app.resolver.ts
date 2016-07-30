@@ -12,7 +12,7 @@ export class DataResolver implements Resolve<any> {
      * @param state
      * @returns {any}
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): any {
         return Observable.of({
             res: 'I am data'
         });
