@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: F-Project
+server:
+  port: 8091
+---
+spring:
+    profiles: dev
+logging:
+  level:
+    org.springframework.web: DEBUG
+---
+spring:
+    profiles: prod
