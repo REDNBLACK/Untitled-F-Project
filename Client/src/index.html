@@ -1,26 +1,23 @@
 <!DOCTYPE html>
 <html lang="">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><%= webpackConfig.metadata.title %></title>
-    <meta name="description" content="<%= webpackConfig.metadata.title %>">
 
-    <% if (webpackConfig.htmlElements.headTags) { %>
-        <%= webpackConfig.htmlElements.headTags %>
-    <% } %>
+  <title>@ngrx/books-demo</title>
 
-    <base href="<%= webpackConfig.metadata.baseUrl %>">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Angular2-Webpack-Lite Boilerplate">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+
+
 </head>
 
 <body>
-    <app>
-        Loading...
-    </app>
+  <app>
+    Loading...
+  </app>
 
-    <% if (webpackConfig.metadata.isDevServer && webpackConfig.metadata.HMR !== true) { %>
-        <script src="/webpack-dev-server.js"></script>
-    <% } %>
 </body>
 </html>
