@@ -6,11 +6,18 @@ spring:
       write-dates-as-timestamps: false
     time-zone: Europe/Moscow
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
+
 server:
   port: 8091
+
+elastic:
+  cluster: elasticsearch
+  host: localhost
+  port: 9300
 ---
 spring:
     profiles: dev
+
 logging:
   level:
     org.springframework.web: DEBUG

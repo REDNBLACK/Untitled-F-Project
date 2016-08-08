@@ -19,7 +19,7 @@ public class APIController {
     @Autowired
     private SearchService searchService;
 
-    @ApiOperation(value = "Ищет случайные блюда в случайном ресторана не основе параметров запроса")
+    @ApiOperation(value = "Ищет случайные блюда в случайном ресторана не основе параметров запроса", httpMethod = "GET")
     @ApiImplicitParams({
         @ApiImplicitParam(
             name = "city",
