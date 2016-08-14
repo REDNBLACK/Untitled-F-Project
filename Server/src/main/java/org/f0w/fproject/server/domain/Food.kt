@@ -8,17 +8,17 @@ data class Food(
     /**
      * Название ресторана
      */
-    val restaurantName: String?,
+    val restaurantName: String,
 
     /**
      * Название службы доставки
      */
-    val supplierName: String?,
+    val supplierName: String,
 
     /**
      * Город в который доставляется
      */
-    val supplyingCity: String?,
+    val supplyingCity: String,
 
     /**
      * Районы в которые доставляется
@@ -28,47 +28,52 @@ data class Food(
     /**
      * Стоимость доставки
      */
-    val supplyCost: BigDecimal?,
+    val supplyCost: BigDecimal,
 
     /**
      * Среднее время доставки
      */
-    val supplyAvgTime: LocalTime?,
+    val supplyAvgTime: LocalTime,
 
     /**
      * Интервал приема заказов
      */
-    val orderPeriod: Period?,
+    val orderPeriod: Period,
 
     /**
      * Название блюда
      */
-    val title: String?,
+    val title: String,
 
     /**
      * Тип кухни
      */
-    val cuisineType: String?,
+    val cuisineType: String,
+
+    /**
+     * Минимальная сумма заказа]
+     */
+    val minimalCostAllowed: BigDecimal,
 
     /**
      * Стоимость блюда
      */
-    val cost: BigDecimal?,
+    val cost: BigDecimal,
 
     /**
-     * Все блюда
+     * Вес блюда
      */
-    val weight: Double?,
+    val weight: Double,
 
     /**
      * Описание блюда
      */
-    val description: String?,
+    val description: String,
 
     /**
      * Изображение блюда
      */
-    val imageUUID: String?,
+    val imageUUID: String,
 
     /**
      * Тэги блюда
