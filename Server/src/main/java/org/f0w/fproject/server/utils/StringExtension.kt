@@ -8,21 +8,25 @@ fun String.containsAll(vararg strings: String): Boolean {
     return true
 }
 
-fun String.toBigDecimalOrEmpty(): BigDecimal {
+fun String?.toBigDecimalOrEmpty(): BigDecimal {
     return toBigDecimalOrDefault(0.0);
 }
 
-fun String.toBigDecimalOrNull(): BigDecimal? {
+fun String?.toBigDecimalOrNull(): BigDecimal? {
     try {
-        return BigDecimal.valueOf(toDouble())
+        if (isNullOrEmpty()) throw NumberFormatException()
+
+        return BigDecimal.valueOf(this!!.toDouble())
     } catch (e: NumberFormatException) {
         return null
     }
 }
 
-fun String.toBigDecimalOrDefault(default: Double): BigDecimal {
+fun String?.toBigDecimalOrDefault(default: Double): BigDecimal {
     try {
-        return BigDecimal.valueOf(toDouble())
+        if (isNullOrEmpty()) throw NumberFormatException()
+
+        return BigDecimal.valueOf(this!!.toDouble())
     } catch (e: NumberFormatException) {
         return BigDecimal.valueOf(default)
     }

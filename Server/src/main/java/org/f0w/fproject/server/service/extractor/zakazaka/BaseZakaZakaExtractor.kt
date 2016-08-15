@@ -12,22 +12,19 @@ import org.f0w.fproject.server.utils.toBigDecimalOrNull
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import rx.Observable
-import java.math.BigDecimal
 import java.time.LocalTime
-import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
 abstract class BaseZakaZakaExtractor(protected val title: String, val client: OkHttpClient) : AbstractExtractor() {
-    companion object: KLogging()
+    companion object: KLogging() {
+        val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
+    }
 
     protected val baseUrl = "https://spb.zakazaka.ru"
     protected val menuUrl = "$baseUrl/restaurants/menu/$title"
     protected val infoUrl = "$baseUrl/restaurants/info/$title"
-
-    protected val EMPTY_COST = BigDecimal.valueOf(0.0)
-    protected val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
 
     fun extract(): Observable<Food> {
         val info = Observable.just(infoUrl)
@@ -48,7 +45,7 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
                 .map { href -> Request.Builder().url(href).build() }
-                .zipWith(Observable.interval(3, TimeUnit.SECONDS), { href, interval -> href })
+                .zipWith(Observable.interval(3, TimeUnit.SECONDS), { request, interval -> request })
                 .map { request -> client.newCall(request).execute() }
                 .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
                 .zipWith(info.repeat(), { menu, info ->
@@ -81,19 +78,17 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 ?.first()
                 ?.parent()
                 ?.text()
-                ?.toBigDecimalOrEmpty()
-                ?: EMPTY_COST
+                .toBigDecimalOrEmpty()
 
         val supplierName = when {
-            supplyCost.equals(EMPTY_COST) -> restaurantName
+            (supplyCost.signum() == 0) -> restaurantName
             else -> "ZakaZaka"
         }
 
         val minimalCostAllowed = document.select(".need_minimum_summa")
                 ?.first()
                 ?.attr("data-summa")
-                ?.toBigDecimalOrEmpty()
-                ?: EMPTY_COST
+                .toBigDecimalOrEmpty()
 
         val (orderPeriodStart, orderPeriodEnd) = document.select(".notification--about span")
                 ?.first()
@@ -113,7 +108,7 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                     val cost = product.select(".product-item_bonus span")
                             ?.first()
                             ?.text()
-                            ?.toBigDecimalOrNull()
+                            .toBigDecimalOrNull()
                             ?: continue;
 
                     val title = product.select(".product-item_title p")
