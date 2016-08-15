@@ -15,6 +15,7 @@ class OllisExtractorTest {
         OllisExtractor(OkHttpClient())
                 .extract()
                 .doOnNext { count.incrementAndGet() }
+//        .subscribe()
 //                .map { it.title }
                 .subscribe(
                         { println(it) },

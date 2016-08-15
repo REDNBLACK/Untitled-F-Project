@@ -19,7 +19,9 @@ import java.util.concurrent.TimeUnit
 
 abstract class BaseZakaZakaExtractor(protected val title: String, val client: OkHttpClient) : AbstractExtractor() {
     companion object: KLogging() {
+        val SUPPLIER_NAME = "ZakaZaka"
         val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
+        val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
     }
 
     protected val baseUrl = "https://spb.zakazaka.ru"
@@ -44,6 +46,8 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 .map { it.select(".sort-block_content a") }
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
+                .skip(5)
+                .limit(1)
                 .map { href -> Request.Builder().url(href).build() }
                 .zipWith(Observable.interval(3, TimeUnit.SECONDS), { request, interval -> request })
                 .map { request -> client.newCall(request).execute() }
@@ -82,7 +86,7 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
 
         val supplierName = when {
             (supplyCost.signum() == 0) -> restaurantName
-            else -> "ZakaZaka"
+            else -> SUPPLIER_NAME
         }
 
         val minimalCostAllowed = document.select(".need_minimum_summa")
@@ -130,7 +134,10 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
 
                     val cuisineType = ""
 
-                    val weight = 0.0;
+                    val weight = title.plus(description)
+                            .let { WEIGHT_REGEX.find(it)?.groups?.get(1)?.value }
+                            .toBigDecimalOrNull()
+                            ?.toDouble()
 
                     val tags = emptyList<String>()
 

@@ -68,7 +68,7 @@ data class Food(
     /**
      * Вес блюда
      */
-    val weight: Double,
+    val weight: Double?,
 
     /**
      * Описание блюда
