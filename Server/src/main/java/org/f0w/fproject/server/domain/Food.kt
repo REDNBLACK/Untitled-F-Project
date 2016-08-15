@@ -73,12 +73,12 @@ data class Food(
     /**
      * Описание блюда
      */
-    val description: String,
+    val description: String?,
 
     /**
      * Изображение блюда
      */
-    val imageUUID: String,
+    val imageUUID: String?,
 
     /**
      * Тэги блюда

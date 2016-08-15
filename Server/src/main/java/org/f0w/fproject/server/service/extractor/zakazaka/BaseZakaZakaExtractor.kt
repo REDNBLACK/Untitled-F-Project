@@ -6,6 +6,7 @@ import com.squareup.okhttp.Request
 import mu.KLogging
 import org.f0w.fproject.server.domain.Food
 import org.f0w.fproject.server.service.extractor.AbstractExtractor
+import org.f0w.fproject.server.service.extractor.ExtractionException
 import org.f0w.fproject.server.utils.containsAll
 import org.f0w.fproject.server.utils.toBigDecimalOrEmpty
 import org.f0w.fproject.server.utils.toBigDecimalOrNull
@@ -61,9 +62,16 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
     }
 
     protected fun parseEntries(document: Document): Observable<Food> {
-        val restaurantName = document.select(".restoran-item_title").text()
+        val restaurantName = document.select(".restoran-item_title")
+                .text()
+                .let { if (it.isEmpty()) null else it }
+                ?: throw ExtractionException("Не удалось получить название ресторана!")
 
-        val supplyingCity = document.select("#current-city").text().capitalize()
+        val supplyingCity = document.select("#current-city")
+                .text()
+                .capitalize()
+                .let { if (it.isEmpty()) null else it }
+                ?: throw ExtractionException("Не удалось получить город доставки!")
 
         val supplyAvgTime = document.select(".sprite-ico-timer-2")
                 ?.first()
@@ -73,10 +81,10 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                     when {
                         it.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(it).toInt())
                         it.contains("час") -> LocalTime.of(CharMatcher.DIGIT.retainFrom(it).toInt(), 0)
-                        else -> LocalTime.MIN
+                        else -> null
                     }
                 }
-                ?: LocalTime.MIN
+                ?: throw ExtractionException("Не удалось получить среднее время доставки!");
 
         val supplyCost = document.select(".sprite-ico-rocket-w")
                 ?.first()
@@ -104,7 +112,7 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
 
                     Pair(LocalTime.parse(start, SMART_TIME_FORMATTER), LocalTime.parse(end, SMART_TIME_FORMATTER))
                 }
-                ?: Pair(LocalTime.MIN, LocalTime.MAX)
+                ?: throw ExtractionException("Не удалось получить режим работы ресторана!")
 
         return Observable.create<Food> { subscriber ->
             try {
@@ -113,32 +121,32 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                             ?.first()
                             ?.text()
                             .toBigDecimalOrNull()
-                            ?: continue;
+
+                    if (cost == null) {
+                        logger.warn { "Не удалось получить цену блюда!" }
+                        continue
+                    }
 
                     val title = product.select(".product-item_title p")
                             ?.first()
                             ?.text()
-                            ?: ""
+                            ?: throw ExtractionException("Не удалось получить название блюда!")
 
                     val description = product.select(".ingredients p")
                             ?.first()
                             ?.text()
-                            ?: ""
 
                     val imageUUID = product.select(".product-item_image img")
                             ?.first()
                             ?.absUrl("src")
-                            ?: ""
-
-                    val supplyingArea = emptyList<String>()
-
-                    val cuisineType = ""
 
                     val weight = title.plus(description)
                             .let { WEIGHT_REGEX.find(it)?.groups?.get(1)?.value }
                             .toBigDecimalOrNull()
                             ?.toDouble()
 
+                    val supplyingArea = emptyList<String>()
+                    val cuisineType = ""
                     val tags = emptyList<String>()
 
                     subscriber.onNext(Food(
