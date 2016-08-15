@@ -36,9 +36,14 @@ data class Food(
     val supplyAvgTime: LocalTime,
 
     /**
-     * Интервал приема заказов
+     * Начало интервала приема заказов
      */
-    val orderPeriod: Period,
+    val orderPeriodStart: LocalTime,
+
+    /**
+     * Конец интервала приема заказов
+     */
+    val orderPeriodEnd: LocalTime,
 
     /**
      * Название блюда

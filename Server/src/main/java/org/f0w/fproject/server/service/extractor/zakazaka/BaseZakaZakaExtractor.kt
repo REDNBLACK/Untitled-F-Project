@@ -6,6 +6,7 @@ import com.squareup.okhttp.Request
 import mu.KLogging
 import org.f0w.fproject.server.domain.Food
 import org.f0w.fproject.server.service.extractor.AbstractExtractor
+import org.f0w.fproject.server.utils.containsAll
 import org.f0w.fproject.server.utils.toBigDecimalOrEmpty
 import org.f0w.fproject.server.utils.toBigDecimalOrNull
 import org.jsoup.Jsoup
@@ -14,6 +15,9 @@ import rx.Observable
 import java.math.BigDecimal
 import java.time.LocalTime
 import java.time.Period
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
+import java.util.concurrent.TimeUnit
 
 abstract class BaseZakaZakaExtractor(protected val title: String, val client: OkHttpClient) : AbstractExtractor() {
     companion object: KLogging()
@@ -22,23 +26,20 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
     protected val menuUrl = "$baseUrl/restaurants/menu/$title"
     protected val infoUrl = "$baseUrl/restaurants/info/$title"
 
-    protected val emptyCost = BigDecimal.valueOf(0.0)
+    protected val EMPTY_COST = BigDecimal.valueOf(0.0)
+    protected val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
 
     fun extract(): Observable<Food> {
-        return traverseMenu()
+        val info = Observable.just(infoUrl)
+                .map { href -> Request.Builder().url(href).build() }
+                .map { request -> client.newCall(request).execute() }
+                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
+                .cache()
+
+        return traverseMenu(info)
     }
 
-    protected fun traverseMenu(): Observable<Food> {
-        val infoObservable = Observable.just(infoUrl)
-                .map { href -> Request.Builder().url(href).build() }
-                .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
-
-        val menuObservable = Observable.just(menuUrl)
-                .map { href -> Request.Builder().url(href).build() }
-                .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
-
+    protected fun traverseMenu(info: Observable<Document>): Observable<Food> {
         return Observable.just(menuUrl)
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
@@ -46,10 +47,15 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 .map { it.select(".sort-block_content a") }
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
-                .limit(1)
                 .map { href -> Request.Builder().url(href).build() }
+                .zipWith(Observable.interval(3, TimeUnit.SECONDS), { href, interval -> href })
                 .map { request -> client.newCall(request).execute() }
                 .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
+                .zipWith(info.repeat(), { menu, info ->
+                    menu.select("#contentBox").append(info.select("#contentBox").html())
+
+                    return@zipWith menu
+                })
                 .flatMap { parseEntries(it) }
     }
 
@@ -76,10 +82,10 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 ?.parent()
                 ?.text()
                 ?.toBigDecimalOrEmpty()
-                ?: emptyCost
+                ?: EMPTY_COST
 
         val supplierName = when {
-            supplyCost.equals(emptyCost) -> restaurantName
+            supplyCost.equals(EMPTY_COST) -> restaurantName
             else -> "ZakaZaka"
         }
 
@@ -87,7 +93,19 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                 ?.first()
                 ?.attr("data-summa")
                 ?.toBigDecimalOrEmpty()
-                ?: emptyCost
+                ?: EMPTY_COST
+
+        val (orderPeriodStart, orderPeriodEnd) = document.select(".notification--about span")
+                ?.first()
+                ?.text()
+                ?.let {
+                    if (!it.containsAll(":", "-")) return@let null
+
+                    val (start, end) = it.split("-");
+
+                    Pair(LocalTime.parse(start, SMART_TIME_FORMATTER), LocalTime.parse(end, SMART_TIME_FORMATTER))
+                }
+                ?: Pair(LocalTime.MIN, LocalTime.MAX)
 
         return Observable.create<Food> { subscriber ->
             try {
@@ -98,25 +116,47 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                             ?.toBigDecimalOrNull()
                             ?: continue;
 
-                    val food = Food(
+                    val title = product.select(".product-item_title p")
+                            ?.first()
+                            ?.text()
+                            ?: ""
+
+                    val description = product.select(".ingredients p")
+                            ?.first()
+                            ?.text()
+                            ?: ""
+
+                    val imageUUID = product.select(".product-item_image img")
+                            ?.first()
+                            ?.absUrl("src")
+                            ?: ""
+
+                    val supplyingArea = emptyList<String>()
+
+                    val cuisineType = ""
+
+                    val weight = 0.0;
+
+                    val tags = emptyList<String>()
+
+                    subscriber.onNext(Food(
                             restaurantName = restaurantName,
                             supplierName = supplierName,
                             supplyingCity = supplyingCity,
-                            supplyingArea = emptyList<String>(),
-                            supplyCost = BigDecimal.valueOf(0),
+                            supplyingArea = supplyingArea,
+                            supplyCost = supplyCost,
                             supplyAvgTime = supplyAvgTime,
-                            orderPeriod = Period.ZERO,
-                            title = product.select(".product-item_title p")?.first()?.text() ?: "",
-                            cuisineType = "",
+                            orderPeriodStart = orderPeriodStart,
+                            orderPeriodEnd = orderPeriodEnd,
+                            title = title,
+                            cuisineType = cuisineType,
                             minimalCostAllowed = minimalCostAllowed,
                             cost = cost,
-                            weight = 0.0,
-                            description = product.select(".ingredients p").text(),
-                            imageUUID = product.select(".product-item_image img").first()?.absUrl("src") ?: "",
-                            tags = emptyList<String>()
-                    )
-
-                    subscriber.onNext(food)
+                            weight = weight,
+                            description = description,
+                            imageUUID = imageUUID,
+                            tags = tags
+                    ))
                 }
 
                 subscriber.onCompleted()

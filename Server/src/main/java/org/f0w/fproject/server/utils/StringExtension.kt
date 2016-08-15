@@ -2,6 +2,12 @@ package org.f0w.fproject.server.utils;
 
 import java.math.BigDecimal
 
+fun String.containsAll(vararg strings: String): Boolean {
+    for (string in strings) if (string !in this) return false
+
+    return true
+}
+
 fun String.toBigDecimalOrEmpty(): BigDecimal {
     return toBigDecimalOrDefault(0.0);
 }
