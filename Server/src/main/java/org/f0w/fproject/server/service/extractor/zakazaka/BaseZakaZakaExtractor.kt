@@ -12,7 +12,9 @@ import org.f0w.fproject.server.utils.toBigDecimalOrEmpty
 import org.f0w.fproject.server.utils.toBigDecimalOrNull
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import rx.Observable
+import java.math.BigDecimal
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
@@ -21,13 +23,13 @@ import java.util.concurrent.TimeUnit
 abstract class BaseZakaZakaExtractor(protected val title: String, val client: OkHttpClient) : AbstractExtractor() {
     companion object: KLogging() {
         val SUPPLIER_NAME = "ZakaZaka"
-        val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
         val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
     }
 
     protected val baseUrl = "https://spb.zakazaka.ru"
     protected val menuUrl = "$baseUrl/restaurants/menu/$title"
     protected val infoUrl = "$baseUrl/restaurants/info/$title"
+    private val parser = Parser()
 
     fun extract(): Observable<Food> {
         val info = Observable.just(infoUrl)
@@ -62,92 +64,27 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
     }
 
     protected fun parseEntries(document: Document): Observable<Food> {
-        val restaurantName = document.select(".restoran-item_title")
-                .text()
-                .let { if (it.isEmpty()) null else it }
-                ?: throw ExtractionException("Не удалось получить название ресторана!")
+        val restaurantName = parser.parseRestaurantName(document)
+        val supplyingCity = parser.parseSupplyingCity(document)
+        val supplyAvgTime = parser.parseSupplyAvgTime(document)
+        val supplyCost = parser.parseSupplyCost(document)
+        val supplierName = parser.parseSupplierName(document)
+        val minimalCostAllowed = parser.parseMinimalCostAllowed(document)
+        val (orderPeriodStart, orderPeriodEnd) = parser.parseOrderPeriod(document)
 
-        val supplyingCity = document.select("#current-city")
-                .text()
-                .capitalize()
-                .let { if (it.isEmpty()) null else it }
-                ?: throw ExtractionException("Не удалось получить город доставки!")
-
-        val supplyAvgTime = document.select(".sprite-ico-timer-2")
-                ?.first()
-                ?.parent()
-                ?.text()
-                ?.let {
-                    when {
-                        it.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(it).toInt())
-                        it.contains("час") -> LocalTime.of(CharMatcher.DIGIT.retainFrom(it).toInt(), 0)
-                        else -> null
-                    }
-                }
-                ?: throw ExtractionException("Не удалось получить среднее время доставки!");
-
-        val supplyCost = document.select(".sprite-ico-rocket-w")
-                ?.first()
-                ?.parent()
-                ?.text()
-                .toBigDecimalOrEmpty()
-
-        val supplierName = when {
-            (supplyCost.signum() == 0) -> restaurantName
-            else -> SUPPLIER_NAME
-        }
-
-        val minimalCostAllowed = document.select(".need_minimum_summa")
-                ?.first()
-                ?.attr("data-summa")
-                .toBigDecimalOrEmpty()
-
-        val (orderPeriodStart, orderPeriodEnd) = document.select(".notification--about span")
-                ?.first()
-                ?.text()
-                ?.let {
-                    if (!it.containsAll(":", "-")) return@let null
-
-                    val (start, end) = it.split("-");
-
-                    Pair(LocalTime.parse(start, SMART_TIME_FORMATTER), LocalTime.parse(end, SMART_TIME_FORMATTER))
-                }
-                ?: throw ExtractionException("Не удалось получить режим работы ресторана!")
+        val supplyingArea = emptyList<String>()
+        val cuisineType = ""
+        val tags = emptyList<String>()
 
         return Observable.create<Food> { subscriber ->
             try {
                 for (product in document.select(".product-item")) {
-                    val cost = product.select(".product-item_bonus span")
-                            ?.first()
-                            ?.text()
-                            .toBigDecimalOrNull()
+                    val cost = parser.parseProductCost(product)
 
                     if (cost == null) {
                         logger.warn { "Не удалось получить цену блюда!" }
                         continue
                     }
-
-                    val title = product.select(".product-item_title p")
-                            ?.first()
-                            ?.text()
-                            ?: throw ExtractionException("Не удалось получить название блюда!")
-
-                    val description = product.select(".ingredients p")
-                            ?.first()
-                            ?.text()
-
-                    val imageUUID = product.select(".product-item_image img")
-                            ?.first()
-                            ?.absUrl("src")
-
-                    val weight = title.plus(description)
-                            .let { WEIGHT_REGEX.find(it)?.groups?.get(1)?.value }
-                            .toBigDecimalOrNull()
-                            ?.toDouble()
-
-                    val supplyingArea = emptyList<String>()
-                    val cuisineType = ""
-                    val tags = emptyList<String>()
 
                     subscriber.onNext(Food(
                             restaurantName = restaurantName,
@@ -158,13 +95,13 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                             supplyAvgTime = supplyAvgTime,
                             orderPeriodStart = orderPeriodStart,
                             orderPeriodEnd = orderPeriodEnd,
-                            title = title,
+                            title = parser.parseProductTitle(product),
                             cuisineType = cuisineType,
                             minimalCostAllowed = minimalCostAllowed,
                             cost = cost,
-                            weight = weight,
-                            description = description,
-                            imageUUID = imageUUID,
+                            weight = parser.parseProductWeight(product),
+                            description = parser.parseProductDescription(product),
+                            imageUUID = parser.parseProductImage(product),
                             tags = tags
                     ))
                 }
@@ -173,6 +110,111 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
             } catch (e: Exception) {
                 subscriber.onError(e)
             }
+        }
+    }
+
+    private class Parser {
+        companion object {
+            val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
+        }
+
+        fun parseRestaurantName(root: Document): String {
+            return root.select(".restoran-item_title")
+                    .text()
+                    .let { if (it.isEmpty()) null else it }
+                    ?: throw ExtractionException("Не удалось получить название ресторана!")
+        }
+
+        fun parseSupplyingCity(root: Document): String {
+            return root.select("#current-city")
+                    .text()
+                    .capitalize()
+                    .let { if (it.isEmpty()) null else it }
+                    ?: throw ExtractionException("Не удалось получить город доставки!")
+        }
+
+        fun parseSupplyAvgTime(root: Document): LocalTime {
+            return root.select(".sprite-ico-timer-2")
+                    ?.first()
+                    ?.parent()
+                    ?.text()
+                    ?.let {
+                        when {
+                            it.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(it).toInt())
+                            it.contains("час") -> LocalTime.of(CharMatcher.DIGIT.retainFrom(it).toInt(), 0)
+                            else -> null
+                        }
+                    }
+                    ?: throw ExtractionException("Не удалось получить среднее время доставки!")
+        }
+
+        fun parseSupplyCost(root: Document): BigDecimal {
+            return root.select(".sprite-ico-rocket-w")
+                    ?.first()
+                    ?.parent()
+                    ?.text()
+                    .toBigDecimalOrEmpty()
+        }
+
+        fun parseSupplierName(root: Document): String {
+            return when {
+                (parseSupplyCost(root).signum() == 0) -> parseRestaurantName(root)
+                else -> SUPPLIER_NAME
+            }
+        }
+
+        fun parseMinimalCostAllowed(root: Document): BigDecimal {
+            return root.select(".need_minimum_summa")
+                    ?.first()
+                    ?.attr("data-summa")
+                    .toBigDecimalOrEmpty()
+        }
+
+        fun parseOrderPeriod(root: Document): Pair<LocalTime, LocalTime> {
+            return root.select(".notification--about span")
+                    ?.first()
+                    ?.text()
+                    ?.let {
+                        if (!it.containsAll(":", "-")) return@let null
+
+                        val (start, end) = it.split("-");
+
+                        Pair(LocalTime.parse(start, SMART_TIME_FORMATTER), LocalTime.parse(end, SMART_TIME_FORMATTER))
+                    }
+                    ?: throw ExtractionException("Не удалось получить режим работы ресторана!")
+        }
+
+        fun parseProductCost(node: Element): BigDecimal? {
+            return node.select(".product-item_bonus span")
+                    ?.first()
+                    ?.text()
+                    .toBigDecimalOrNull()
+        }
+
+        fun parseProductTitle(node: Element): String {
+            return node.select(".product-item_title p")
+                    ?.first()
+                    ?.text()
+                    ?: throw ExtractionException("Не удалось получить название блюда!")
+        }
+
+        fun parseProductDescription(node: Element): String? {
+            return node.select(".ingredients p")
+                    ?.first()
+                    ?.text()
+        }
+
+        fun parseProductImage(node: Element): String? {
+            return node.select(".product-item_image img")
+                    ?.first()
+                    ?.absUrl("src")
+        }
+
+        fun parseProductWeight(node: Element): Double? {
+            return parseProductTitle(node).plus(parseProductDescription(node))
+                    .let { WEIGHT_REGEX.find(it)?.groups?.get(1)?.value }
+                    .toBigDecimalOrNull()
+                    ?.toDouble()
         }
     }
 }
