@@ -1,0 +1,12 @@
+{
+  "cuisine_mapping": {
+    "properties": {
+      "cuisine_type": {
+        "type": "string"
+      },
+      "food": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@ import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.Request
 import mu.KLogging
 import org.f0w.fproject.server.domain.Food
+import org.f0w.fproject.server.service.cuisine.CuisineDetectionStrategy
 import org.f0w.fproject.server.service.extractor.AbstractExtractor
 import org.f0w.fproject.server.service.extractor.ExtractionException
 import org.f0w.fproject.server.utils.containsAll
@@ -20,18 +21,21 @@ import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
-abstract class BaseZakaZakaExtractor(protected val title: String, val client: OkHttpClient) : AbstractExtractor() {
+abstract class BaseZakaZakaExtractor(
+        val config: ZakaZakaConfig,
+        val cuisineDetectionStrategy: CuisineDetectionStrategy,
+        val client: OkHttpClient
+) : AbstractExtractor() {
     companion object: KLogging() {
-        val SUPPLIER_NAME = "ZakaZaka"
-        val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
+        const val SUPPLIER_NAME = "ZakaZaka"
     }
 
     protected val baseUrl = "https://spb.zakazaka.ru"
-    protected val menuUrl = "$baseUrl/restaurants/menu/$title"
-    protected val infoUrl = "$baseUrl/restaurants/info/$title"
+    protected val menuUrl = "$baseUrl/restaurants/menu/${config.restaurantName}"
+    protected val infoUrl = "$baseUrl/restaurants/info/${config.restaurantName}"
     private val parser = Parser()
 
-    fun extract(): Observable<Food> {
+    override fun extract(): Observable<Food> {
         val info = Observable.just(infoUrl)
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
@@ -60,22 +64,10 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
 
                     return@zipWith menu
                 })
-                .flatMap { parseEntries(it) }
+                .flatMap { extractEntries(it) }
     }
 
-    protected fun parseEntries(document: Document): Observable<Food> {
-        val restaurantName = parser.parseRestaurantName(document)
-        val supplyingCity = parser.parseSupplyingCity(document)
-        val supplyAvgTime = parser.parseSupplyAvgTime(document)
-        val supplyCost = parser.parseSupplyCost(document)
-        val supplierName = parser.parseSupplierName(document)
-        val minimalCostAllowed = parser.parseMinimalCostAllowed(document)
-        val (orderPeriodStart, orderPeriodEnd) = parser.parseOrderPeriod(document)
-
-        val supplyingArea = emptyList<String>()
-        val cuisineType = ""
-        val tags = emptyList<String>()
-
+    protected fun extractEntries(document: Document): Observable<Food> {
         return Observable.create<Food> { subscriber ->
             try {
                 for (product in document.select(".product-item")) {
@@ -86,18 +78,22 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
                         continue
                     }
 
+                    val (orderPeriodStart, orderPeriodEnd) = parser.parseOrderPeriod(document)
+                    val title = parser.parseProductTitle(product);
+                    val tags = emptyList<String>()
+
                     subscriber.onNext(Food(
-                            restaurantName = restaurantName,
-                            supplierName = supplierName,
-                            supplyingCity = supplyingCity,
-                            supplyingArea = supplyingArea,
-                            supplyCost = supplyCost,
-                            supplyAvgTime = supplyAvgTime,
+                            restaurantName = parser.parseRestaurantName(document),
+                            supplierName = parser.parseSupplierName(document),
+                            supplyingCity = parser.parseSupplyingCity(document),
+                            supplyingArea = config.supplyingArea,
+                            supplyCost = parser.parseSupplyCost(document),
+                            supplyAvgTime = parser.parseSupplyAvgTime(document),
                             orderPeriodStart = orderPeriodStart,
                             orderPeriodEnd = orderPeriodEnd,
-                            title = parser.parseProductTitle(product),
-                            cuisineType = cuisineType,
-                            minimalCostAllowed = minimalCostAllowed,
+                            title = title,
+                            cuisineType = cuisineDetectionStrategy.detect(title),
+                            minimalCostAllowed = parser.parseMinimalCostAllowed(document),
                             cost = cost,
                             weight = parser.parseProductWeight(product),
                             description = parser.parseProductDescription(product),
@@ -115,6 +111,7 @@ abstract class BaseZakaZakaExtractor(protected val title: String, val client: Ok
 
     private class Parser {
         companion object {
+            val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
             val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
         }
 
