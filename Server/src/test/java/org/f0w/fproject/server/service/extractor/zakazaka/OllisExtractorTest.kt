@@ -1,36 +1,39 @@
 package org.f0w.fproject.server.service.extractor.zakazaka
 
 import com.squareup.okhttp.OkHttpClient
-import org.f0w.fproject.server.domain.CuisineMapping
-import org.f0w.fproject.server.utils.pointToResources
-import org.f0w.fproject.server.utils.toStringFromResources
+import org.elasticsearch.client.Client
+import org.f0w.fproject.server.service.cuisine.DictionaryAwareCuisineDetectionStrategy
 import org.junit.Test
-import org.yaml.snakeyaml.Yaml
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileReader
+import org.junit.runner.RunWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
-class OllisExtractorTest {
+@RunWith(SpringJUnit4ClassRunner::class)
+open class OllisExtractorTest {
+    @Autowired
+    lateinit var elastic: Client
+
     @Test
     fun extract() {
 //        val count = AtomicInteger(0)
 //
 ////        areas.forEach { println { it } }
 //
-//        OllisExtractor(OkHttpClient())
-//                .extract()
+        OllisExtractor(OkHttpClient())
+                .extract()
 //                .doOnNext { count.incrementAndGet() }
-////        .subscribe()
-////                .map { it.title }
-//                .subscribe(
-//                        { println(it) },
-//                        { println(it) }
-//                )
+//        .subscribe()
+//                .map { it.title }
+                .subscribe(
+                        { println(it) },
+                        { println(it) }
+                )
 //
 //        println("count: $count")
+
+        DictionaryAwareCuisineDetectionStrategy(elastic).detect("Пицца перфекто оллис молодежная 417 гр. *");
 //
-//        TimeUnit.HOURS.sleep(2)
+        TimeUnit.HOURS.sleep(2)
     }
 }
