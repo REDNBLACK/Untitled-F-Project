@@ -5,5 +5,5 @@ object Constants {
     val FOOD = "food"
 
     val ELASTIC_CUISINE_INDEX = "cuisine"
-    val CUISINE_MAPPING = "cuisine_type"
+    val CUISINE_MAPPING = "cuisine_mapping"
 }

@@ -2,6 +2,7 @@ package org.f0w.fproject.server.service.cuisine
 
 import mu.KLogging
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.query.QueryBuilders
 import org.f0w.fproject.server.Constants
 import org.f0w.fproject.server.utils.DomainException
@@ -9,7 +10,7 @@ import org.f0w.fproject.server.utils.DomainException
 /**
  * Интеллектуальный поиск типа блюда по словарю
  */
-class DictionaryAwareCuisineDetectionStrategy(val elastic: Client) : CuisineDetectionStrategy {
+class DictionaryAwareCuisineDetectionStrategy(private val elastic: Client) : CuisineDetectionStrategy {
     companion object: KLogging()
 
     /**
@@ -20,18 +21,23 @@ class DictionaryAwareCuisineDetectionStrategy(val elastic: Client) : CuisineDete
             throw DomainException("Elastic недоступен")
         }
 
-        val tokens = foodTitle.split(" ").toList()
+        val tokens = foodTitle.split(" ").map { it.toLowerCase() }
         val boolFilter = QueryBuilders.boolQuery()
-        tokens.forEach { token -> boolFilter.must(QueryBuilders.termQuery("food", token)) }
+
+//        boolFilter.(QueryBuilders.termsQuery("food", *tokens))
         val boolQuery = QueryBuilders.boolQuery()
+
+        tokens.forEach { boolFilter.should(QueryBuilders.fuzzyQuery("food", it).fuzziness(Fuzziness.ONE)) }
         boolQuery.filter(boolFilter)
 
         val x = elastic.prepareSearch(Constants.ELASTIC_CUISINE_INDEX)
                 .setTypes(Constants.CUISINE_MAPPING)
                 .setQuery(boolQuery)
-                .get()
+
+        val y = x.get()
 
         logger.info { x }
+        logger.info { y }
 
         return ""
     }

@@ -6,7 +6,9 @@ import org.f0w.fproject.server.utils.toStringFromResources
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.context.annotation.Bean
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.yaml.snakeyaml.Yaml
 import java.io.File
 import javax.annotation.PostConstruct
 
@@ -18,7 +20,7 @@ open class Application {
         fun main(args: Array<String>) {
             SpringApplication.run(Application::class.java, *args)
         }
-    };
+    }
 
     @Autowired
     private lateinit var elastic: Client
@@ -36,17 +38,8 @@ open class Application {
                     .addMapping(Constants.FOOD, mapping)
                     .get()
         }
-
-        if (!elastic.admin().indices().prepareExists(Constants.ELASTIC_CUISINE_INDEX).get().isExists) {
-            logger.info { "[Elastic] Создание индекса ${Constants.ELASTIC_CUISINE_INDEX}" }
-
-            val mapping = File("elastic/cuisine_mapping.index.json").toStringFromResources();
-
-            elastic.admin()
-                    .indices()
-                    .prepareCreate(Constants.ELASTIC_CUISINE_INDEX)
-                    .addMapping(Constants.CUISINE_MAPPING, mapping)
-                    .get()
-        }
     }
+
+    @Bean
+    open fun yaml() = Yaml()
 }

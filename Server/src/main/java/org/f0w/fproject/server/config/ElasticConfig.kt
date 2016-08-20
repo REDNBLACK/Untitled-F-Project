@@ -13,13 +13,13 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 
 @Configuration
-class ElasticConfig {
+open class ElasticConfig {
     @Autowired
     private lateinit var env: Environment
 
     @Bean
     @Throws(UnknownHostException::class)
-    fun elastic(): Client {
+    open fun elastic(): Client {
         val settings = Settings.settingsBuilder().put("cluster.name", env.getProperty("elastic.cluster")).build()
 
         return TransportClient.builder()

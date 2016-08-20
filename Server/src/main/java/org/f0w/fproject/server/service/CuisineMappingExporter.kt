@@ -7,6 +7,7 @@ import org.f0w.fproject.server.Constants
 import org.f0w.fproject.server.domain.CuisineMapping
 import org.f0w.fproject.server.utils.DomainException
 import org.f0w.fproject.server.utils.pointToResources
+import org.f0w.fproject.server.utils.toStringFromResources
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.yaml.snakeyaml.Yaml
@@ -24,7 +25,16 @@ class CuisineMappingExporter(
 
     @PostConstruct
     fun init() {
-        batchInsertToElastic(loadMappings())
+        dropElasticIndex()
+        createElasticIndex()
+
+        val cuisineMappings = loadMappings()
+
+        insertToElastic(cuisineMappings)
+
+        logger.info("[CuisineMappingExporter] Соотношения кухни к блюдам успешно обновлены (Кол-во записей: {})",
+                cuisineMappings.size
+        )
     }
 
     private fun loadMappings(): List<CuisineMapping> {
@@ -47,7 +57,32 @@ class CuisineMappingExporter(
                 }
     }
 
-    private fun batchInsertToElastic(cuisineMappings: List<CuisineMapping>) {
+    private fun dropElasticIndex() {
+        if (elastic.admin().indices().prepareExists(Constants.ELASTIC_CUISINE_INDEX).get().isExists) {
+            logger.info { "[CuisineMappingExporter] Очистка индекса ${Constants.ELASTIC_CUISINE_INDEX}" }
+
+            elastic.admin()
+                    .indices()
+                    .prepareDelete(Constants.ELASTIC_CUISINE_INDEX)
+                    .get()
+        }
+    }
+
+    private fun createElasticIndex() {
+        if (!elastic.admin().indices().prepareExists(Constants.ELASTIC_CUISINE_INDEX).get().isExists) {
+            logger.info { "[CuisineMappingExporter] Создание индекса ${Constants.ELASTIC_CUISINE_INDEX}" }
+
+            val mapping = File("elastic/cuisine_mapping.index.json").toStringFromResources()
+
+            elastic.admin()
+                    .indices()
+                    .prepareCreate(Constants.ELASTIC_CUISINE_INDEX)
+                    .addMapping(Constants.CUISINE_MAPPING, mapping)
+                    .get()
+        }
+    }
+
+    private fun insertToElastic(cuisineMappings: List<CuisineMapping>) {
         try {
             val bulk = elastic.prepareBulk()
 
@@ -60,7 +95,7 @@ class CuisineMappingExporter(
                     }
                     .forEach { bulk.add(it) }
 
-            val response = bulk.get();
+            val response = bulk.get()
 
             if (response.hasFailures()) {
                 throw DomainException(response.buildFailureMessage())

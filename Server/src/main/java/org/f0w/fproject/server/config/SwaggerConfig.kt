@@ -15,12 +15,12 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2
 @Configuration
 @Profile("!prod")
 @EnableSwagger2
-class SwaggerConfig {
+open class SwaggerConfig {
     @Autowired
     private lateinit var env: Environment
 
     @Bean
-    fun api(): Docket {
+    open fun api(): Docket {
         return Docket(DocumentationType.SWAGGER_2)
                 .groupName(env.getProperty("spring.application.name"))
                 .apiInfo(ApiInfo(

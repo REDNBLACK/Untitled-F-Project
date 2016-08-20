@@ -6,13 +6,11 @@ import org.f0w.fproject.server.service.cuisine.DictionaryAwareCuisineDetectionSt
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner
 import java.util.concurrent.TimeUnit
 
-@RunWith(SpringJUnit4ClassRunner::class)
 open class OllisExtractorTest {
-    @Autowired
-    lateinit var elastic: Client
 
     @Test
     fun extract() {
@@ -31,8 +29,6 @@ open class OllisExtractorTest {
                 )
 //
 //        println("count: $count")
-
-        DictionaryAwareCuisineDetectionStrategy(elastic).detect("Пицца перфекто оллис молодежная 417 гр. *");
 //
         TimeUnit.HOURS.sleep(2)
     }
