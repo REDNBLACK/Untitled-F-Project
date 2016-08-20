@@ -7,7 +7,7 @@ class StaticCuisineDetectionStrategy(val cuisineType: String) : CuisineDetection
     /**
      * {@inheritDoc}
      */
-    override fun detect(foodTitle: String?): String? {
-        return cuisineType;
+    override fun detect(foodTitle: String): String {
+        return cuisineType
     }
 }

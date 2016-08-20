@@ -43,9 +43,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.3"
-    compile "com.google.guava:guava:19.0"
-    compile "com.diffplug.durian:durian:3.4.0"
-    compile "org.apache.commons:commons-lang3:3.4"
+    compile 'org.jetbrains.kotlinx:kotlinx-support-jdk8:0.3'
 
     compile group: 'io.reactivex', name: 'rxjava', version: '1.1.8'
     compile group: 'io.reactivex', name: 'rxkotlin', version: '0.60.0'

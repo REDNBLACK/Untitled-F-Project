@@ -22,7 +22,7 @@ class SwaggerConfig {
     @Bean
     fun api(): Docket {
         return Docket(DocumentationType.SWAGGER_2)
-                .groupName(env!!.getProperty("spring.application.name"))
+                .groupName(env.getProperty("spring.application.name"))
                 .apiInfo(ApiInfo(
                     env.getProperty("spring.application.name"),
                     "Сервис для поиска еды",
