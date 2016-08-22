@@ -6,7 +6,7 @@ Pizza Ollis:
   cuisineDetectionStrategy:
     type: dictionary
 
-Brynza:
+Чебуречная брынза:
   restaurantLink: fastedacheburekibrynza
   supplyingArea:
     type: file
@@ -14,3 +14,24 @@ Brynza:
   cuisineDetectionStrategy:
     type: static
     contents: Русская кухня
+
+Шашлычный двор:
+  restaurantLink: shashlychnyy-dvor
+  supplyingArea:
+    type: list
+    contents:
+      - Василеостровский район
+      - Адмиралтейский район
+      - Выборгский район
+      - Калининский район
+      - Кировский район
+      - Красногвардейский район
+      - Красносельский район
+      - Московский район
+      - Невский район
+      - Петроградский район
+      - Приморский район
+      - Фрунзенский район
+      - Центральный район
+  cuisineDetectionStrategy:
+    type: dictionary
