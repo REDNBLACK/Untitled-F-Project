@@ -21,8 +21,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
-abstract class BaseZakaZakaExtractor(
-        val config: ZakaZakaConfig,
+class ZakaZakaExtractor(
+        val restaurantLink: String,
+        val supplyingArea: List<String>,
         val cuisineDetectionStrategy: CuisineDetectionStrategy,
         val client: OkHttpClient
 ) : AbstractExtractor() {
@@ -30,9 +31,9 @@ abstract class BaseZakaZakaExtractor(
         const val SUPPLIER_NAME = "ZakaZaka"
     }
 
-    protected val baseUrl = "https://spb.zakazaka.ru"
-    protected val menuUrl = "$baseUrl/restaurants/menu/${config.restaurantName}"
-    protected val infoUrl = "$baseUrl/restaurants/info/${config.restaurantName}"
+    private val baseUrl = "https://spb.zakazaka.ru"
+    private val menuUrl = "$baseUrl/restaurants/menu/$restaurantLink"
+    private val infoUrl = "$baseUrl/restaurants/info/$restaurantLink"
     private val parser = Parser()
 
     override fun extract(): Observable<Food> {
@@ -79,14 +80,14 @@ abstract class BaseZakaZakaExtractor(
                     }
 
                     val (orderPeriodStart, orderPeriodEnd) = parser.parseOrderPeriod(document)
-                    val title = parser.parseProductTitle(product);
+                    val title = parser.parseProductTitle(product)
                     val tags = emptyList<String>()
 
                     subscriber.onNext(Food(
                             restaurantName = parser.parseRestaurantName(document),
                             supplierName = parser.parseSupplierName(document),
                             supplyingCity = parser.parseSupplyingCity(document),
-                            supplyingArea = config.supplyingArea,
+                            supplyingArea = supplyingArea,
                             supplyCost = parser.parseSupplyCost(document),
                             supplyAvgTime = parser.parseSupplyAvgTime(document),
                             orderPeriodStart = orderPeriodStart,

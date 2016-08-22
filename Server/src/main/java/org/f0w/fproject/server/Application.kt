@@ -1,5 +1,6 @@
 package org.f0w.fproject.server
 
+import com.squareup.okhttp.OkHttpClient
 import mu.KLogging
 import org.elasticsearch.client.Client
 import org.f0w.fproject.server.utils.toStringFromResources
@@ -42,4 +43,7 @@ open class Application {
 
     @Bean
     open fun yaml() = Yaml()
+
+    @Bean
+    open fun httpClient() = OkHttpClient()
 }

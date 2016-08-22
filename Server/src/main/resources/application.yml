@@ -20,7 +20,7 @@ spring:
 
 logging:
   level:
-    org.springframework.web: DEBUG
+    org.springframework.web: ERROR
 ---
 spring:
     profiles: prod

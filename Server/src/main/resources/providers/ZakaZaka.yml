@@ -1,0 +1,17 @@
+Pizza Ollis:
+  restaurantLink: ollis
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Мультинациональная кухня
+
+Brynza:
+  restaurantLink: fastedacheburekibrynza
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Русская кухня
