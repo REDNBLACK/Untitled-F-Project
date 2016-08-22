@@ -4,8 +4,7 @@ Pizza Ollis:
     type: file
     contents: Saint-Petersburg
   cuisineDetectionStrategy:
-    type: static
-    contents: Мультинациональная кухня
+    type: dictionary
 
 Brynza:
   restaurantLink: fastedacheburekibrynza

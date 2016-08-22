@@ -54,10 +54,10 @@ class ZakaZakaExtractor(
                 .map { it.select(".sort-block_content a") }
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
-                .skip(5)
-                .limit(1)
+//                .skip(5)
+//                .limit(1)
                 .map { href -> Request.Builder().url(href).build() }
-                .zipWith(Observable.interval(3, TimeUnit.SECONDS), { request, interval -> request })
+                .zipWith(Observable.interval(300, TimeUnit.MILLISECONDS), { request, interval -> request })
                 .map { request -> client.newCall(request).execute() }
                 .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
                 .zipWith(info.repeat(), { menu, info ->
