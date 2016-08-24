@@ -1,4 +1,4 @@
-Pizza Ollis:
+Пицца Ollis:
   restaurantLink: ollis
   supplyingArea:
     type: file
@@ -34,4 +34,5 @@ Pizza Ollis:
       - Фрунзенский район
       - Центральный район
   cuisineDetectionStrategy:
-    type: dictionary
+    type: static
+    contents: Кавказкая кухня

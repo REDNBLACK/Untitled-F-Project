@@ -5,20 +5,21 @@ import org.elasticsearch.client.Client
 import org.f0w.fproject.server.service.cuisine.CuisineDetectionStrategy
 import org.f0w.fproject.server.service.cuisine.DictionaryAwareCuisineDetectionStrategy
 import org.f0w.fproject.server.service.cuisine.StaticCuisineDetectionStrategy
+import org.f0w.fproject.server.service.extractor.Extractor
+import org.f0w.fproject.server.service.extractor.ExtractorFactory
 import org.f0w.fproject.server.utils.streamFromResources
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 
-@Component
-open class ZakaZakaExtractorFactory(
-        @Autowired val yamlMapper: Yaml,
-        @Autowired val elastic: Client,
-        @Autowired val httpClient: OkHttpClient
-) {
-    open fun make(restaurant: String): ZakaZakaExtractor {
-        val document = (yamlMapper.load(File("providers/ZakaZaka.yml").streamFromResources()) as Map<String, Any>)
+class ZakaZakaExtractorFactory(
+        private val yaml: Yaml,
+        private val elastic: Client,
+        private val httpClient: OkHttpClient
+) : ExtractorFactory {
+    override fun getName() = "ZakaZaka"
+
+    override fun make(restaurant: String): Extractor {
+        val document = (yaml.load(File("providers/ZakaZaka.yml").streamFromResources()) as Map<String, Any>)
         val restaurantData = document.get(restaurant) as Map<String, Any>
         val restaurantLink = restaurantData.get("restaurantLink") as String
         val supplyingArea = getSupplyingArea(restaurantData.get("supplyingArea") as Map<String, Any>)
@@ -44,7 +45,7 @@ open class ZakaZakaExtractorFactory(
         val contents = supplyingArea.get("contents")
 
         when (type) {
-            "file" -> return yamlMapper.load(File("areas/${contents as String}.yml").streamFromResources()) as List<String>
+            "file" -> return yaml.load(File("areas/${contents as String}.yml").streamFromResources()) as List<String>
             "list" -> return contents as List<String>
             else -> throw IllegalArgumentException("Неподдерживаемый формат района доставки!")
         }

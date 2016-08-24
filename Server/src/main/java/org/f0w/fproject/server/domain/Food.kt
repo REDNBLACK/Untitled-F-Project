@@ -1,8 +1,8 @@
 package org.f0w.fproject.server.domain
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import java.math.BigDecimal
 import java.time.LocalTime
-import java.time.Period
 
 data class Food(
     /**
@@ -31,18 +31,26 @@ data class Food(
     val supplyCost: BigDecimal,
 
     /**
+     * Минимальная сумма заказа
+     */
+    val minimalCostAllowed: BigDecimal,
+
+    /**
      * Среднее время доставки
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     val supplyAvgTime: LocalTime,
 
     /**
      * Начало интервала приема заказов
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     val orderPeriodStart: LocalTime,
 
     /**
      * Конец интервала приема заказов
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     val orderPeriodEnd: LocalTime,
 
     /**
@@ -54,11 +62,6 @@ data class Food(
      * Тип кухни
      */
     val cuisineType: String,
-
-    /**
-     * Минимальная сумма заказа]
-     */
-    val minimalCostAllowed: BigDecimal,
 
     /**
      * Стоимость блюда

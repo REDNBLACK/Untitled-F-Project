@@ -19,10 +19,6 @@ class ZakaZakaExtractorFactoryTest {
     fun make() {
         val extractor = factory.make("Pizza Ollis")
 
-        println(extractor.restaurantLink)
-        println(extractor.supplyingArea)
-        println(extractor.cuisineDetectionStrategy)
-
         extractor.extract()
             .subscribe(
                     { println(it) },

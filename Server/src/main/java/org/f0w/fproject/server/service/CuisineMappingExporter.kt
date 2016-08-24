@@ -10,12 +10,13 @@ import org.f0w.fproject.server.utils.pointToResources
 import org.f0w.fproject.server.utils.toStringFromResources
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.io.FileInputStream
 import javax.annotation.PostConstruct
 
-@Component
+@Service
 class CuisineMappingExporter(
         @Autowired val elastic: Client,
         @Autowired val yamlMapper: Yaml,
@@ -44,7 +45,7 @@ class CuisineMappingExporter(
                 .map { FileInputStream(it) }
                 .map { yamlMapper.load(it) }
                 .map {
-                    when(it) {
+                    when (it) {
                         is Map<*, *> -> it as Map<String, List<String>>
                         else -> null
                     }

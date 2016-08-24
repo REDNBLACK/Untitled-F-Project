@@ -22,44 +22,42 @@ import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
 class ZakaZakaExtractor(
-        val restaurantLink: String,
-        val supplyingArea: List<String>,
-        val cuisineDetectionStrategy: CuisineDetectionStrategy,
-        val client: OkHttpClient
+        private val restaurantLink: String,
+        private val supplyingArea: List<String>,
+        private val cuisineDetectionStrategy: CuisineDetectionStrategy,
+        private val client: OkHttpClient
 ) : AbstractExtractor() {
     companion object: KLogging() {
         const val SUPPLIER_NAME = "ZakaZaka"
+        const val BASE_URL = "https://spb.zakazaka.ru"
     }
 
-    private val baseUrl = "https://spb.zakazaka.ru"
-    private val menuUrl = "$baseUrl/restaurants/menu/$restaurantLink"
-    private val infoUrl = "$baseUrl/restaurants/info/$restaurantLink"
+    private val menuUrl = "$BASE_URL/restaurants/menu/$restaurantLink"
+    private val infoUrl = "$BASE_URL/restaurants/info/$restaurantLink"
     private val parser = Parser()
 
     override fun extract(): Observable<Food> {
         val info = Observable.just(infoUrl)
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
+                .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
                 .cache()
 
         return traverseMenu(info)
     }
 
-    protected fun traverseMenu(info: Observable<Document>): Observable<Food> {
+    private fun traverseMenu(info: Observable<Document>): Observable<Food> {
         return Observable.just(menuUrl)
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
+                .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
                 .map { it.select(".sort-block_content a") }
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
-//                .skip(5)
-//                .limit(1)
                 .map { href -> Request.Builder().url(href).build() }
-                .zipWith(Observable.interval(300, TimeUnit.MILLISECONDS), { request, interval -> request })
+                .zipWith(Observable.interval(1, TimeUnit.SECONDS), { request, interval -> request })
                 .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), baseUrl) }
+                .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
                 .zipWith(info.repeat(), { menu, info ->
                     menu.select("#contentBox").append(info.select("#contentBox").html())
 
@@ -68,7 +66,7 @@ class ZakaZakaExtractor(
                 .flatMap { extractEntries(it) }
     }
 
-    protected fun extractEntries(document: Document): Observable<Food> {
+    private fun extractEntries(document: Document): Observable<Food> {
         return Observable.create<Food> { subscriber ->
             try {
                 for (product in document.select(".product-item")) {
@@ -83,7 +81,7 @@ class ZakaZakaExtractor(
                     val title = parser.parseProductTitle(product)
                     val tags = emptyList<String>()
 
-                    subscriber.onNext(Food(
+                    val food = Food(
                             restaurantName = parser.parseRestaurantName(document),
                             supplierName = parser.parseSupplierName(document),
                             supplyingCity = parser.parseSupplyingCity(document),
@@ -100,7 +98,9 @@ class ZakaZakaExtractor(
                             description = parser.parseProductDescription(product),
                             imageUUID = parser.parseProductImage(product),
                             tags = tags
-                    ))
+                    )
+
+                    subscriber.onNext(food)
                 }
 
                 subscriber.onCompleted()
@@ -113,7 +113,8 @@ class ZakaZakaExtractor(
     private class Parser {
         companion object {
             val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
-            val SMART_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME.withResolverStyle(ResolverStyle.SMART)
+            val SMART_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_TIME
+                    .withResolverStyle(ResolverStyle.SMART)
         }
 
         fun parseRestaurantName(root: Document): String {
