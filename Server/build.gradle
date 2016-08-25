@@ -58,6 +58,7 @@ dependencies {
     // Java 8 support
     compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.1'
 
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.8.1'
     compile 'org.jsoup:jsoup:1.9.2'
     compile 'com.squareup.okhttp:okhttp:2.7.5'
 
