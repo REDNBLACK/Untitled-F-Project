@@ -46,7 +46,7 @@ class FoodUpdateJob(
                             {
                                 logger.info("""
                                     Сохранение блюд было успешно завершено.
-                                    Рестораны: $restaurants
+                                    Рестораны (${restaurants.size}): $restaurants
                                     Всего блюд: $foodCount
                                     """.trimIndent()
                                 )

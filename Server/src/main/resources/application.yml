@@ -7,6 +7,11 @@ spring:
     time-zone: Europe/Moscow
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
 
+logging:
+  level:
+    org.springframework: ERROR
+    springfox: ERROR
+
 server:
   port: 8091
 
@@ -20,11 +25,6 @@ food-extractor:
 ---
 spring:
     profiles: dev
-
-logging:
-  level:
-    org.springframework.web: ERROR
-    org.springframework.boot: ERROR
 ---
 spring:
     profiles: prod

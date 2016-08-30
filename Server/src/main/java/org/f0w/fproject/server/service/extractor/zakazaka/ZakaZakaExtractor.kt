@@ -51,7 +51,7 @@ class ZakaZakaExtractor(
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
                 .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
-                .map { it.select(".sort-block_content a") }
+                .map { it.select(".sort-block a") }
                 .flatMap { Observable.from(it) }
                 .map { it.absUrl("href") }
                 .map { href -> Request.Builder().url(href).build() }
@@ -73,7 +73,7 @@ class ZakaZakaExtractor(
                     val cost = parser.parseProductCost(product)
 
                     if (cost == null) {
-                        logger.warn { "Не удалось получить цену блюда!" }
+                        logger.warn { "Не удалось получить цену блюда для: $product" }
                         continue
                     }
 
@@ -133,18 +133,29 @@ class ZakaZakaExtractor(
         }
 
         fun parseSupplyAvgTime(root: Document): LocalTime {
-            return root.select(".sprite-ico-timer-2")
+            val time = root.select(".sprite-ico-timer-2")
                     ?.first()
                     ?.parent()
                     ?.text()
-                    ?.let {
-                        when {
-                            it.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(it).toInt())
-                            it.contains("час") -> LocalTime.of(CharMatcher.DIGIT.retainFrom(it).toInt(), 0)
-                            else -> null
-                        }
-                    }
                     ?: throw ExtractionException("Не удалось получить среднее время доставки!")
+
+            return when {
+                time.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(time).toInt())
+                time.contains("час") -> try {
+                    val hours = CharMatcher.DIGIT
+                            .or(CharMatcher.`is`(','))
+                            .retainFrom(time)
+                            .replace(",", ".")
+                            .toDouble()
+
+                    val minutes = (hours % 1) * 60 / 1
+
+                    return LocalTime.of(hours.toInt(), minutes.toInt())
+                } catch (e: NumberFormatException) {
+                    throw ExtractionException("Не удалось получить среднее время доставки!", e)
+                }
+                else -> throw ExtractionException("Не удалось получить среднее время доставки!")
+            }
         }
 
         fun parseSupplyCost(root: Document): BigDecimal {
@@ -152,6 +163,8 @@ class ZakaZakaExtractor(
                     ?.first()
                     ?.parent()
                     ?.text()
+                    ?.split(" ")
+                    ?.firstOrNull()
                     .toBigDecimalOrEmpty()
         }
 

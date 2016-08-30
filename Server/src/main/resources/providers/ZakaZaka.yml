@@ -1,3 +1,4 @@
+#Разное
 Пицца Ollis:
   restaurantLink: ollis
   supplyingArea:
@@ -15,6 +16,7 @@
     type: static
     contents: Русская кухня
 
+#Шашлыки
 Шашлычный двор:
   restaurantLink: shashlychnyy-dvor
   supplyingArea:
@@ -36,3 +38,114 @@
   cuisineDetectionStrategy:
     type: static
     contents: Кавказкая кухня
+
+
+#Итальянская - Пицца
+Telepizza:
+  restaurantLink: telepizzaspb2
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Итальянская кухня
+
+Otto:
+  restaurantLink: otto
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Итальянская кухня
+
+Francesco:
+  restaurantLink: francesco
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Итальянская кухня
+
+Сбарро:
+  restaurantLink: sbarrospb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Итальянская кухня
+
+#Американская - Бургеры
+Макдональдс:
+  restaurantLink: makdakfastpeppers
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+Карлс Джуниор:
+  restaurantLink: karlsdjunior
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+Hesburger:
+  restaurantLink: hesburgerafastpeppers
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+BurgerKing:
+  restaurantLink: burkingfastpeppers
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+KFC:
+  restaurantLink: kuritsa-iz-kentukkifastpeppers
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+Бургер-бар brgr45:
+  restaurantLink: burger-bar-brgr45spb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+Бейглoff:
+  restaurantLink: bejgloffspb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
+
+Russo Burger:
+  restaurantLink: russo-burgerfastpeppers
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Американская кухня
