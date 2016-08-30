@@ -25,10 +25,11 @@ class FoodUpdateJob(
     companion object: KLogging()
 
     override fun run() {
-        logger.info { """
+        logger.info("""
             Запущена обработка сервиса ${extractorFactory.getName()}
             Для ресторанов: $restaurants
-        """.trimIndent() }
+            """.trimIndent()
+        )
 
         val foodCount = AtomicLong(0)
         val executor = Executors.newSingleThreadExecutor()
@@ -44,10 +45,11 @@ class FoodUpdateJob(
                             { error -> logger.error("Ошибка сохранения блюда", error) },
                             {
                                 logger.info("""
-                                            Сохранение блюд было успешно завершено.
-                                            Рестораны: $restaurants
-                                            Всего блюд: $foodCount
-                                """.trimIndent())
+                                    Сохранение блюд было успешно завершено.
+                                    Рестораны: $restaurants
+                                    Всего блюд: $foodCount
+                                    """.trimIndent()
+                                )
                             }
                     )
         }

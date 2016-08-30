@@ -1,8 +1,8 @@
 package org.f0w.fproject.server.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import mu.KLogging
 import org.elasticsearch.client.Client
-import org.f0w.fproject.server.Application
 import org.f0w.fproject.server.Constants
 import org.f0w.fproject.server.service.extractor.ExtractorFactory
 import org.f0w.fproject.server.service.extractor.ExtractorsFactory
@@ -10,7 +10,7 @@ import org.f0w.fproject.server.utils.streamFromResources
 import org.f0w.fproject.server.utils.toStringFromResources
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -18,7 +18,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.PostConstruct
 
-@Service
+@Component
 class JobExecutor(
         @Autowired
         private val env: Environment,
@@ -35,6 +35,8 @@ class JobExecutor(
         @Autowired
         private val jsonMapper: ObjectMapper
 ) {
+    companion object: KLogging()
+
     private val executor = Executors.newSingleThreadExecutor()
     private val working = AtomicBoolean(false)
 
@@ -42,12 +44,12 @@ class JobExecutor(
     fun init() {
         if (!env.getProperty("food-extractor.force-update", Boolean::class.java, false)) return
 
-        val jobs = arrayListOf(
-            makeJob(
+        val zakaZakaJob = makeJob(
                 (yaml.load(File("providers/ZakaZaka.yml").streamFromResources()) as Map<String, Any>).keys,
                 extractorsFactory.getZakaZakaExtractorFactory()
-            )
         )
+
+        val jobs = arrayListOf(zakaZakaJob)
 
         update(jobs)
     }
@@ -75,7 +77,7 @@ class JobExecutor(
                     .get()
         }
 
-        Application.logger.info { "[Elastic] Создание индекса ${Constants.ELASTIC_FOOD_INDEX}" }
+        logger.info { "[JobExecutor] Создание индекса ${Constants.ELASTIC_FOOD_INDEX}" }
 
         val mapping = File("elastic/food.index.json").toStringFromResources()
 
@@ -90,9 +92,9 @@ class JobExecutor(
         val list = jobs.map { CompletableFuture.runAsync(it, executor) }.toTypedArray()
 
         CompletableFuture.allOf(*list)
-                .whenComplete({ v, t ->
+                .whenComplete { value, err ->
                     working.set(false)
-                    Application.logger.info("Обновление списка еды завершено")
-                })
+                    logger.info("Обновление списка еды завершено")
+                }
     }
 }
