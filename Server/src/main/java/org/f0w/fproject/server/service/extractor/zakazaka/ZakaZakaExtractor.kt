@@ -22,6 +22,7 @@ import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
 class ZakaZakaExtractor(
+        private val restaurantName: String,
         private val restaurantLink: String,
         private val supplyingArea: List<String>,
         private val cuisineDetectionStrategy: CuisineDetectionStrategy,
@@ -34,7 +35,7 @@ class ZakaZakaExtractor(
 
     private val menuUrl = "$BASE_URL/restaurants/menu/$restaurantLink"
     private val infoUrl = "$BASE_URL/restaurants/info/$restaurantLink"
-    private val parser = Parser()
+    private val parser = Parser(restaurantName)
 
     override fun extract(): Observable<Food> {
         val info = Observable.just(infoUrl)
@@ -77,12 +78,19 @@ class ZakaZakaExtractor(
                         continue
                     }
 
-                    val (orderPeriodStart, orderPeriodEnd) = parser.parseOrderPeriod(document)
+                    val (orderPeriodStart, orderPeriodEnd) = try {
+                        parser.parseOrderPeriod(document)
+                    } catch (e: ExtractionException) {
+                        logger.error { document }
+                        logger.error { document.select(".notification--about span") }
+                        throw e
+                    }
+
                     val title = parser.parseProductTitle(product)
                     val tags = emptyList<String>()
 
                     val food = Food(
-                            restaurantName = parser.parseRestaurantName(document),
+                            restaurantName = restaurantName,
                             supplierName = parser.parseSupplierName(document),
                             supplyingCity = parser.parseSupplyingCity(document),
                             supplyingArea = supplyingArea,
@@ -110,18 +118,14 @@ class ZakaZakaExtractor(
         }
     }
 
-    private class Parser {
+    private class Parser(private val restaurantName: String) {
         companion object {
             val WEIGHT_REGEX = Regex("(\\d{1,9}+)(\\s*)гр")
             val SMART_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_TIME
                     .withResolverStyle(ResolverStyle.SMART)
-        }
-
-        fun parseRestaurantName(root: Document): String {
-            return root.select(".restoran-item_title")
-                    .text()
-                    .let { if (it.isEmpty()) null else it }
-                    ?: throw ExtractionException("Не удалось получить название ресторана!")
+            val TIME_MATCHER: CharMatcher = CharMatcher.DIGIT
+                    .or(CharMatcher.`is`(','))
+                    .precomputed()
         }
 
         fun parseSupplyingCity(root: Document): String {
@@ -140,17 +144,15 @@ class ZakaZakaExtractor(
                     ?: throw ExtractionException("Не удалось получить среднее время доставки!")
 
             return when {
-                time.contains("мин") -> LocalTime.of(0, CharMatcher.DIGIT.retainFrom(time).toInt())
+                time.contains("мин") -> LocalTime.of(0, TIME_MATCHER.retainFrom(time).toInt())
                 time.contains("час") -> try {
-                    val hours = CharMatcher.DIGIT
-                            .or(CharMatcher.`is`(','))
-                            .retainFrom(time)
+                    val hours = TIME_MATCHER.retainFrom(time)
                             .replace(",", ".")
                             .toDouble()
 
                     val minutes = (hours % 1) * 60 / 1
 
-                    return LocalTime.of(hours.toInt(), minutes.toInt())
+                    LocalTime.of(hours.toInt(), minutes.toInt())
                 } catch (e: NumberFormatException) {
                     throw ExtractionException("Не удалось получить среднее время доставки!", e)
                 }
@@ -170,7 +172,7 @@ class ZakaZakaExtractor(
 
         fun parseSupplierName(root: Document): String {
             return when {
-                (parseSupplyCost(root).signum() == 0) -> parseRestaurantName(root)
+                (parseSupplyCost(root).signum() == 0) -> restaurantName
                 else -> SUPPLIER_NAME
             }
         }
@@ -184,14 +186,21 @@ class ZakaZakaExtractor(
 
         fun parseOrderPeriod(root: Document): Pair<LocalTime, LocalTime> {
             return root.select(".notification--about span")
-                    ?.first()
-                    ?.text()
                     ?.let {
-                        if (!it.containsAll(":", "-")) return@let null
+                        for (element in it) {
+                            val orderPeriodElement = element.text()
 
-                        val (start, end) = it.split("-");
+                            if (!orderPeriodElement.containsAll(":", "-")) continue
 
-                        Pair(LocalTime.parse(start, SMART_TIME_FORMATTER), LocalTime.parse(end, SMART_TIME_FORMATTER))
+                            val (start, end) = orderPeriodElement.split("-")
+
+                            return Pair(
+                                    LocalTime.parse(start, SMART_TIME_FORMATTER),
+                                    LocalTime.parse(end, SMART_TIME_FORMATTER)
+                            )
+                        }
+
+                        return@let null
                     }
                     ?: throw ExtractionException("Не удалось получить режим работы ресторана!")
         }

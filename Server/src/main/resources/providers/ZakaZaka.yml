@@ -16,7 +16,107 @@
     type: static
     contents: Русская кухня
 
-#Шашлыки
+#Японская - Суши
+Ollis Суши:
+  restaurantLink: ollissushi
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+MiaSushi:
+  restaurantLink: miasushi
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Невские суши:
+  restaurantLink: nevskie-sushispb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Sushi Mafia:
+  restaurantLink: sushimafia
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Sale суши:
+  restaurantLink: salesushi
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Сытные суши:
+  restaurantLink: sytnye-sushispb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Суши Рия:
+  restaurantLink: sushi-ria
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Zombie Sushi:
+  restaurantLink: zombiesushi
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Sushi Lounge:
+  restaurantLink: sushi-lounge
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Кафе Свои люди:
+  restaurantLink: svoilyudieda
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+Tako:
+  restaurantLink: takospb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Японская кухня
+
+#Кавказкая - Шашлыки
 Шашлычный двор:
   restaurantLink: shashlychnyy-dvor
   supplyingArea:
@@ -39,6 +139,23 @@
     type: static
     contents: Кавказкая кухня
 
+Добрый грузин:
+  restaurantLink: dobryj-gruzinspb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Кавказкая кухня
+
+HayCafe:
+  restaurantLink: haycafespb
+  supplyingArea:
+    type: file
+    contents: Saint-Petersburg
+  cuisineDetectionStrategy:
+    type: static
+    contents: Кавказкая кухня
 
 #Итальянская - Пицца
 Telepizza:
@@ -87,7 +204,7 @@ Francesco:
     type: static
     contents: Американская кухня
 
-Карлс Джуниор:
+Carl's Junior:
   restaurantLink: karlsdjunior
   supplyingArea:
     type: file

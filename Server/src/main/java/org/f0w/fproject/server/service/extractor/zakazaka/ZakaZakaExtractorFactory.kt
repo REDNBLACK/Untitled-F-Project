@@ -27,7 +27,7 @@ class ZakaZakaExtractorFactory(
                 restaurantData.get("cuisineDetectionStrategy") as Map<String, Any>
         )
 
-        return ZakaZakaExtractor(restaurantLink, supplyingArea, cuisineDetectionStrategy, httpClient)
+        return ZakaZakaExtractor(restaurant, restaurantLink, supplyingArea, cuisineDetectionStrategy, httpClient)
     }
 
     private fun getCuisineDetectionStrategy(cuisineDetectionStrategy: Map<String, Any>): CuisineDetectionStrategy {
