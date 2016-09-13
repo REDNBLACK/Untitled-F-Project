@@ -4,17 +4,12 @@
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: dictionary
 
 Чебуречная брынза:
   restaurantLink: fastedacheburekibrynza
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Русская кухня
 
 #Японская - Суши
 Ollis Суши:
@@ -22,99 +17,66 @@ Ollis Суши:
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 MiaSushi:
   restaurantLink: miasushi
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Невские суши:
   restaurantLink: nevskie-sushispb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Sushi Mafia:
   restaurantLink: sushimafia
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Sale суши:
   restaurantLink: salesushi
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Сытные суши:
   restaurantLink: sytnye-sushispb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Суши Рия:
   restaurantLink: sushi-ria
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Zombie Sushi:
   restaurantLink: zombiesushi
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Sushi Lounge:
   restaurantLink: sushi-lounge
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Кафе Свои люди:
   restaurantLink: svoilyudieda
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 Tako:
   restaurantLink: takospb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Японская кухня
 
 #Кавказкая - Шашлыки
 Шашлычный двор:
@@ -135,27 +97,18 @@ Tako:
       - Приморский район
       - Фрунзенский район
       - Центральный район
-  cuisineDetectionStrategy:
-    type: static
-    contents: Кавказкая кухня
 
 Добрый грузин:
   restaurantLink: dobryj-gruzinspb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Кавказкая кухня
 
 HayCafe:
   restaurantLink: haycafespb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Кавказкая кухня
 
 #Итальянская - Пицца
 Telepizza:
@@ -172,27 +125,18 @@ Otto:
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Итальянская кухня
 
 Francesco:
   restaurantLink: francesco
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Итальянская кухня
 
 Сбарро:
   restaurantLink: sbarrospb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Итальянская кухня
 
 #Американская - Бургеры
 Макдональдс:
@@ -200,69 +144,45 @@ Francesco:
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 Carl's Junior:
   restaurantLink: karlsdjunior
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 Hesburger:
   restaurantLink: hesburgerafastpeppers
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 BurgerKing:
   restaurantLink: burkingfastpeppers
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 KFC:
   restaurantLink: kuritsa-iz-kentukkifastpeppers
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 Бургер-бар brgr45:
   restaurantLink: burger-bar-brgr45spb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 Бейглoff:
   restaurantLink: bejgloffspb
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня
 
 Russo Burger:
   restaurantLink: russo-burgerfastpeppers
   supplyingArea:
     type: file
     contents: Saint-Petersburg
-  cuisineDetectionStrategy:
-    type: static
-    contents: Американская кухня

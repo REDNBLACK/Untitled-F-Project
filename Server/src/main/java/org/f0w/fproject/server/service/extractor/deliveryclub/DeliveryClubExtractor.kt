@@ -1,4 +1,4 @@
-package org.f0w.fproject.server.service.extractor.zakazaka
+package org.f0w.fproject.server.service.extractor.deliveryclub;
 
 import com.google.common.base.CharMatcher
 import com.squareup.okhttp.OkHttpClient
@@ -18,21 +18,20 @@ import java.math.BigDecimal
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
-import java.util.concurrent.TimeUnit
 
-class ZakaZakaExtractor(
+class DeliveryClubExtractor(
         private val restaurantName: String,
         private val restaurantLink: String,
         private val supplyingArea: List<String>,
         private val client: OkHttpClient
 ) : AbstractExtractor() {
     companion object: KLogging() {
-        const val SUPPLIER_NAME = "ZakaZaka"
-        const val BASE_URL = "https://spb.zakazaka.ru"
+        const val SUPPLIER_NAME = "Delivery Club"
+        const val BASE_URL = "http://spb.delivery-club.ru"
     }
 
-    private val menuUrl = "$BASE_URL/restaurants/menu/$restaurantLink"
-    private val infoUrl = "$BASE_URL/restaurants/info/$restaurantLink"
+    private val menuUrl = "$BASE_URL/srv/$restaurantLink"
+    private val infoUrl = "$menuUrl/info"
     private val parser = Parser(restaurantName)
 
     override fun extract(): Observable<Food> {
@@ -50,15 +49,8 @@ class ZakaZakaExtractor(
                 .map { href -> Request.Builder().url(href).build() }
                 .map { request -> client.newCall(request).execute() }
                 .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
-                .map { it.select(".sort-block a") }
-                .flatMap { Observable.from(it) }
-                .map { it.absUrl("href") }
-                .map { href -> Request.Builder().url(href).build() }
-                .zipWith(Observable.interval(1, TimeUnit.SECONDS), { request, interval -> request })
-                .map { request -> client.newCall(request).execute() }
-                .map { response -> Jsoup.parse(response.body().string(), BASE_URL) }
                 .zipWith(info.repeat(), { menu, info ->
-                    menu.select("#contentBox").append(info.select("#contentBox").html())
+                    menu.select("#content").append(info.select("#content").html())
 
                     return@zipWith menu
                 })
@@ -68,7 +60,7 @@ class ZakaZakaExtractor(
     private fun extractEntries(document: Document): Observable<Food> {
         return Observable.create<Food> { subscriber ->
             try {
-                for (product in document.select(".product-item")) {
+                for (product in document.select(".dish")) {
                     val cost = parser.parseProductCost(product)
 
                     if (cost == null) {
@@ -119,22 +111,30 @@ class ZakaZakaExtractor(
         }
 
         fun parseSupplyingCity(root: Document): String {
-            return root.select("#current-city")
-                    .text()
-                    .capitalize()
-                    .let { if (it.isEmpty()) null else it }
+            return root.select("#user-addr__input")
+                    ?.`val`()
+                    ?.trim()
+                    ?.split(",")
+                    ?.first()
+                    ?.capitalize()
+                    ?.let { if (it.isEmpty()) null else it }
                     ?: throw ExtractionException("Не удалось получить город доставки!")
         }
 
         fun parseSupplyAvgTime(root: Document): LocalTime {
-            val time = root.select(".sprite-ico-timer-2")
+            val time = root.select(".placeholder_avg_time")
                     ?.first()
-                    ?.parent()
                     ?.text()
                     ?: throw ExtractionException("Не удалось получить среднее время доставки!")
 
             return when {
-                time.contains("мин") -> LocalTime.of(0, TIME_MATCHER.retainFrom(time).toInt())
+                time.contains("мин") -> {
+                    val timeParsed = TIME_MATCHER.retainFrom(time).toInt()
+                    val hours = if (timeParsed >= 60) timeParsed / 60 else 0
+                    val minutes = if (timeParsed < 60) timeParsed else 0
+
+                    return LocalTime.of(hours, minutes)
+                }
                 time.contains("час") -> try {
                     val hours = TIME_MATCHER.retainFrom(time)
                             .replace(",", ".")
@@ -151,12 +151,11 @@ class ZakaZakaExtractor(
         }
 
         fun parseSupplyCost(root: Document): BigDecimal {
-            return root.select(".sprite-ico-rocket-w")
+            return root.select(".placeholder_delivery_cost")
                     ?.first()
-                    ?.parent()
                     ?.text()
-                    ?.split(" ")
-                    ?.firstOrNull()
+                    ?.trim()
+                    ?.let { if (it == "БЕСПЛАТНО") null else it }
                     .toBigDecimalOrEmpty()
         }
 
@@ -168,67 +167,67 @@ class ZakaZakaExtractor(
         }
 
         fun parseCuisineType(root: Document): List<String> {
-            return root.select(".restoran-item_description")
-                 ?.first()
-                 ?.text()
-                 ?.replace("Кухня:", "")
-                 ?.split("/")
-                 ?.map { it.trim() }
-                 ?: throw ExtractionException("Не удалось получить тип кухни!")
+            return root.select(".category span")
+                    ?.first()
+                    ?.text()
+                    ?.replace("/", "")
+                    ?.replace(",", "")
+                    ?.split(" ")
+                    ?.map { it.trim() }
+                    ?.filter { !it.isNullOrEmpty() }
+                    ?: throw ExtractionException("Не удалось получить тип кухни!")
         }
 
         fun parseMinimalCostAllowed(root: Document): BigDecimal {
-            return root.select(".need_minimum_summa")
+            return root.select(".placeholder_min_order")
                     ?.first()
-                    ?.attr("data-summa")
+                    ?.ownText()
                     .toBigDecimalOrEmpty()
         }
 
         fun parseOrderPeriod(root: Document): Pair<LocalTime, LocalTime> {
-            return root.select(".notification--about span")
+            return root.select(".placeholder_workhours")
+                    ?.first()
+                    ?.text()
                     ?.let {
-                        for (element in it) {
-                            val orderPeriodElement = element.text()
+                        if (it == "круглосуточно") return@let Pair(LocalTime.MIN, LocalTime.MAX)
 
-                            if (!orderPeriodElement.containsAll(":", "-")) continue
+                        if (!it.containsAll(":", "до")) return@let null
 
-                            val (start, end) = orderPeriodElement.split("-")
+                        val (start, end) = it.replace("с", "").split("до").map { it.trim() }
 
-                            return Pair(
-                                    LocalTime.parse(start, SMART_TIME_FORMATTER),
-                                    LocalTime.parse(end, SMART_TIME_FORMATTER)
-                            )
-                        }
-
-                        return@let null
+                        return Pair(
+                                LocalTime.parse(start, SMART_TIME_FORMATTER),
+                                LocalTime.parse(end, SMART_TIME_FORMATTER)
+                        )
                     }
                     ?: throw ExtractionException("Не удалось получить режим работы ресторана!")
         }
 
         fun parseProductCost(node: Element): BigDecimal? {
-            return node.select(".product-item_bonus span")
+            return node.select("form > p > strong > span")
                     ?.first()
                     ?.text()
                     .toBigDecimalOrNull()
         }
 
         fun parseProductTitle(node: Element): String {
-            return node.select(".product-item_title p")
+            return node.select(".product_title span")
                     ?.first()
                     ?.text()
                     ?: throw ExtractionException("Не удалось получить название блюда!")
         }
 
         fun parseProductDescription(node: Element): String? {
-            return node.select(".ingredients p")
+            return node.select(".dish_detail p")
                     ?.first()
                     ?.text()
         }
 
         fun parseProductImage(node: Element): String? {
-            return node.select(".product-item_image img")
+            return node.select(".main_img img")
                     ?.first()
-                    ?.absUrl("src")
+                    ?.let { "$BASE_URL${it.attr("data-load")}" }
         }
 
         fun parseProductWeight(node: Element): Double? {

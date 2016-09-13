@@ -2,9 +2,6 @@ package org.f0w.fproject.server.service.extractor.zakazaka
 
 import com.squareup.okhttp.OkHttpClient
 import org.elasticsearch.client.Client
-import org.f0w.fproject.server.service.cuisine.CuisineDetectionStrategy
-import org.f0w.fproject.server.service.cuisine.DictionaryAwareCuisineDetectionStrategy
-import org.f0w.fproject.server.service.cuisine.StaticCuisineDetectionStrategy
 import org.f0w.fproject.server.service.extractor.Extractor
 import org.f0w.fproject.server.service.extractor.ExtractorFactory
 import org.f0w.fproject.server.utils.streamFromResources
@@ -23,21 +20,8 @@ class ZakaZakaExtractorFactory(
         val restaurantData = document.get(restaurant) as Map<String, Any>
         val restaurantLink = restaurantData.get("restaurantLink") as String
         val supplyingArea = getSupplyingArea(restaurantData.get("supplyingArea") as Map<String, Any>)
-        val cuisineDetectionStrategy = getCuisineDetectionStrategy(
-                restaurantData.get("cuisineDetectionStrategy") as Map<String, Any>
-        )
 
-        return ZakaZakaExtractor(restaurant, restaurantLink, supplyingArea, cuisineDetectionStrategy, httpClient)
-    }
-
-    private fun getCuisineDetectionStrategy(cuisineDetectionStrategy: Map<String, Any>): CuisineDetectionStrategy {
-        val type = cuisineDetectionStrategy.get("type") as String
-
-        when (type) {
-            "static" -> return StaticCuisineDetectionStrategy(cuisineDetectionStrategy.get("contents") as String)
-            "dictionary" -> return DictionaryAwareCuisineDetectionStrategy(elastic)
-            else -> throw IllegalArgumentException("Неподдерживаемый формат стратегии поиска типа кухни!")
-        }
+        return ZakaZakaExtractor(restaurant, restaurantLink, supplyingArea, httpClient)
     }
 
     private fun getSupplyingArea(supplyingArea: Map<String, Any>): List<String> {

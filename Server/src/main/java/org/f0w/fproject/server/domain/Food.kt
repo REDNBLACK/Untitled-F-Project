@@ -61,7 +61,7 @@ data class Food(
     /**
      * Тип кухни
      */
-    val cuisineType: String,
+    val cuisineType: List<String>,
 
     /**
      * Стоимость блюда

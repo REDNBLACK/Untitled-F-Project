@@ -21,7 +21,7 @@ elastic:
   port: 9300
 
 food-extractor:
-  force-update: false
+  force-update: true
 ---
 spring:
     profiles: dev
