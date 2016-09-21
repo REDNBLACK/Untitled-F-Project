@@ -64,8 +64,8 @@ class FoodUpdateJob(
         food
             .map { jsonWriter.writeValueAsString(it) }
             .map { foodAsJson -> elastic.prepareIndex()
-                    .setIndex(Constants.ELASTIC_FOOD_INDEX)
-                    .setType(Constants.FOOD)
+                    .setIndex(Constants.FOOD_INDEX)
+                    .setType(Constants.FOOD_TYPE)
                     .setSource(foodAsJson)
             }
             .forEach { bulk.add(it) }

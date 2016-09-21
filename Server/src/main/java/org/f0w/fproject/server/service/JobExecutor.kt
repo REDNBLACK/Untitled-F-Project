@@ -70,21 +70,21 @@ class JobExecutor(
      * Запуск процесса обновления
      */
     private fun update(jobs: List<FoodUpdateJob>) {
-        if (elastic.admin().indices().prepareExists(Constants.ELASTIC_FOOD_INDEX).get().isExists) {
+        if (elastic.admin().indices().prepareExists(Constants.FOOD_INDEX).get().isExists) {
             elastic.admin()
                     .indices()
-                    .prepareDelete(Constants.ELASTIC_FOOD_INDEX)
+                    .prepareDelete(Constants.FOOD_INDEX)
                     .get()
         }
 
-        logger.info { "[JobExecutor] Создание индекса ${Constants.ELASTIC_FOOD_INDEX}" }
+        logger.info { "[JobExecutor] Создание индекса ${Constants.FOOD_INDEX}" }
 
         val mapping = File("elastic/food.index.json").toStringFromResources()
 
         elastic.admin()
                 .indices()
-                .prepareCreate(Constants.ELASTIC_FOOD_INDEX)
-                .addMapping(Constants.FOOD, mapping)
+                .prepareCreate(Constants.FOOD_INDEX)
+                .addMapping(Constants.FOOD_TYPE, mapping)
                 .get()
 
         if (working.get()) return else working.set(true)
